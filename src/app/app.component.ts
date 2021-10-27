@@ -14,8 +14,6 @@ export class AppComponent implements OnInit {
         const sessionInfo = SessionUtils.getSessionInfo();
         if (sessionInfo) {
             this.user = sessionInfo.user;
-        } else {
-            // window.location.href = CommonConstants.OKTA_LOGIN_URL;
         }
     }
 }
