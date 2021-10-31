@@ -1,13 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonConstants } from 'src/app/common/constants/common-constants';
+import { LoginService } from './login.service';
 
 @Component({
     selector: 'login',
     template: ''
 })
 export class LoginComponent implements OnInit {
-    ngOnInit() {
-        window.location.href = CommonConstants.OKTA_LOGIN_URL;
+    constructor (
+        private loginSvc: LoginService
+    ) {}
+
+    async ngOnInit() {
+        const authUrl = await this.loginSvc.getAuthUrl();
+        console.log("AuthUrl", authUrl);
+        window.location.href = authUrl;
     }
 }
 

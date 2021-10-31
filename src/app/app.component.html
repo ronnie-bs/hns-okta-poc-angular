@@ -1,7 +1,9 @@
-<h1>Welcome to the Heidrick & Struggles POC App</h1>
+<div *ngIf="isAuthenticated">
+    <h1>Welcome to the Heidrick & Struggles POC App</h1>
 
-<h2>You are currently logged in as {{ user }}</h2>
+    <h2>You are currently logged in as {{ user }}</h2>
 
-<navigation></navigation>
+    <navigation></navigation>
+</div>
 
 <router-outlet></router-outlet>
