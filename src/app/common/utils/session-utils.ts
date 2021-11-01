@@ -22,6 +22,10 @@ export class SessionUtils {
         sessionStorage.setItem(SESSION_STORAGE_OBJ_SESSION_INFO, JSON.stringify(ssoTokenResponse));
     }
 
+    public static removeSessionInfo() {
+        sessionStorage.removeItem(SESSION_STORAGE_OBJ_SESSION_INFO);
+    }
+
     public static getSsoVerifyInfo(): SsoVerifyInfo {
         let retVal = null;
         try {

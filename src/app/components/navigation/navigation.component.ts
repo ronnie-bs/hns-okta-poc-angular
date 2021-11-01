@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
     selector: 'navigation',
@@ -13,7 +14,8 @@ export class NavigationComponent implements OnInit, OnDestroy {
     activeSelection = "home";
 
     constructor(
-        private router: Router
+        private router: Router,
+        private authSvc: AuthService
     ) {}
 
     ngOnInit() {
@@ -21,7 +23,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
             .pipe(filter(event => event instanceof NavigationStart))
             .subscribe((e) => {
                 const event = <NavigationStart> e;
-                this.activeSelection = event.url.replace("/", "");
+                this.activeSelection = this.activeSelection === "" ? event.url.replace("/", "") : this.activeSelection;
             });
         this.subs$.push(sub$);
     }
@@ -35,6 +37,20 @@ export class NavigationComponent implements OnInit, OnDestroy {
     }
 
     navigateTo(uri: string) {
-        this.router.navigate([uri]);
+        switch(uri) {
+            case "logout":
+                this.activeSelection = "logout";
+                this.authSvc.logout();
+                break;
+            case "tazio":
+                this.activeSelection = "tazio";
+                break;
+            case "eightfold":
+                this.activeSelection = "eightfold";
+                break;
+            default:
+                this.activeSelection = "";
+                this.router.navigate([uri]);
+        }
     }
 }

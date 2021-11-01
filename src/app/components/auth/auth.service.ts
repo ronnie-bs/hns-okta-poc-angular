@@ -69,12 +69,46 @@ export class AuthService {
         });
     }
 
+    public logout() {
+        const tokenRevokeUrl = this.getTokenRevokeUrl();
+        const tokenRevokeBody = this.getTokenRevokeBody();
+        const tokenRevokeHeader = this.getTokenRevokeHeader();
+        this.http.post(tokenRevokeUrl, tokenRevokeBody, { headers: tokenRevokeHeader } )
+            .subscribe(tokenRevokeResponse => {
+                const logoutUrl = this.getLogoutUrl();;
+                SessionUtils.removeSessionInfo();
+                window.location.href = logoutUrl;
+            });
+    }
+
     public getSsoTokenResponse(): SsoTokenResponse | null {
         return this.ssoTokenResponse;
     }
 
     public getTokenUrl(): string {
         return `${CommonConstants.OKTA_TOKEN_BASE_URL}`;
+    }
+
+    public getTokenRevokeUrl(): string {
+        return `${CommonConstants.OKTA_TOKEN_REVOKE_BASE_URL}`;
+    }
+
+    public getTokenRevokeBody(): string {
+        return `${this.getTokenTypeHintUrlParam()}` +
+            `&${this.getTokenUrlParam()}`;
+    }
+
+    public getTokenRevokeHeader(): any {
+        return {
+            'content-type': 'application/x-www-form-urlencoded',
+            'authorization': `Basic ${btoa(CLIENT_ID)}`
+        };
+    }
+
+    public getLogoutUrl(): string {
+        return `${CommonConstants.OKTA_LOGOUT_BASE_URL}` +
+            `?${this.getIdTokenHintUrlParam()}` +
+            `&${this.getLogoutRedirectUrlParam()}`;
     }
 
     public getTokenRequestBody(authCode: string): string {
@@ -147,6 +181,22 @@ export class AuthService {
         return `code=${authCode}`;
     }
 
+    private getIdTokenHintUrlParam() {
+        return `id_token_hint=${this.getIdTokenHint()}`;
+    }
+
+    private getLogoutRedirectUrlParam() {
+        return `post_logout_redirect_uri=${this.getLogoutRedirectUrl()}`;
+    }
+
+    private getTokenTypeHintUrlParam() {
+        return `token_type_hint: access_token`;
+    }
+
+    private getTokenUrlParam() {
+        return `token=${this.getToken()}`;
+    }
+
     private getCodeVerifier(): string {
         if (this.codeVerifier === "") {
             this.codeVerifier = this.getRandomString();
@@ -199,6 +249,20 @@ export class AuthService {
         const jwt = tokenResponse["access_token"];
         const decoded = jwtDecode<JwtPayload>(jwt);
         return decoded.sub;
+    }
+
+    private getIdTokenHint() {
+        const sessionInfo = SessionUtils.getSessionInfo();
+        return sessionInfo.idToken;
+    }
+
+    private getToken() {
+        const sessionInfo = SessionUtils.getSessionInfo();
+        return sessionInfo.accessToken;
+    }
+
+    private getLogoutRedirectUrl() {
+        return window.location.origin;
     }
 
     private getRandomString(length: number = 64) {
