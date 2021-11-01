@@ -6,7 +6,8 @@ import { AppComponent } from './app.component';
 import { AboutComponent } from './components/about/about.component';
 import { AuthGuardService } from './components/auth/auth-guard.service';
 import { AuthService } from './components/auth/auth.service';
-import { LoginService } from './components/auth/login.service';
+import { LoginCallbackComponent } from './components/auth/login-callback.component';
+import { LoginComponent } from './components/auth/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { NavigationComponent } from './components/navigation/navigation.component';
 import { ProfileComponent } from './components/profile/profile.component';
@@ -18,6 +19,8 @@ import { ProfileComponent } from './components/profile/profile.component';
         HomeComponent,
         ProfileComponent,
         AboutComponent,
+        LoginComponent,
+        LoginCallbackComponent
     ],
     imports: [
         BrowserModule,
@@ -26,7 +29,6 @@ import { ProfileComponent } from './components/profile/profile.component';
     providers: [
         AuthService,
         AuthGuardService,
-        LoginService
     ],
     entryComponents: [
         NavigationComponent

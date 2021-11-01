@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { LoginService } from './login.service';
+import { AuthService } from './auth.service';
 
 @Component({
     selector: 'login',
@@ -7,13 +7,14 @@ import { LoginService } from './login.service';
 })
 export class LoginComponent implements OnInit {
     constructor (
-        private loginSvc: LoginService
+        private authSvc: AuthService
     ) {}
 
     async ngOnInit() {
-        const authUrl = await this.loginSvc.getAuthUrl();
-        console.log("AuthUrl", authUrl);
-        window.location.href = authUrl;
+        // const authUrl = await this.authSvc.getAuthUrl();
+        // console.log("AuthUrl", authUrl);
+        // window.location.href = authUrl;
+        await this.authSvc.redirectToAuthUrl();
     }
 }
 
