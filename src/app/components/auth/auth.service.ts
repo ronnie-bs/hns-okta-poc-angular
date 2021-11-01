@@ -1,12 +1,11 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { encode as base64encode } from "base64-arraybuffer";
-import NonceGenerator from "a-nonce-generator";
 import jwtDecode, { JwtPayload } from "jwt-decode";
 import { SessionUtils } from "src/app/common/utils/session-utils";
 import { CommonConstants } from "src/app/common/constants/common-constants";
-import { OktaTokenResponse } from "src/app/common/models/okta-token-response.model";
-import { Observable, Observer } from "rxjs";
+import { SsoTokenResponse } from "src/app/common/models/sso-token-response.model";
+import { BehaviorSubject, Observable, Observer, Subject } from "rxjs";
 
 
 const CLIENT_ID = "0oa2gfmv78peGnHEy5d7";
@@ -17,7 +16,8 @@ export class AuthService {
     private codeVerifier: string = "";
     private codeChallenge: string = "";
     private state: string = "";
-    private oktaTokenResponse: OktaTokenResponse | null = null;
+    private ssoTokenResponse: SsoTokenResponse | null = null;
+    private auth$: Subject<boolean> = new BehaviorSubject<boolean>(false);
 
     constructor(
         private http: HttpClient
@@ -27,13 +27,12 @@ export class AuthService {
             this.codeVerifier = ssoVerifyInfo.codeVerifier;
             this.codeChallenge = ssoVerifyInfo.codeChallenge;
             this.state = ssoVerifyInfo.state;
-            // SessionUtils.removeSsoVerifyInfo();
+            SessionUtils.removeSsoVerifyInfo();
         }
     }
 
-    public isAuthenticated(): boolean {
-        const sessionInfo = SessionUtils.getSessionInfo();
-        return (sessionInfo && sessionInfo.user !== null);
+    public isAuthenticated(): Observable<boolean> {
+        return this.auth$;
     }
 
     public isStatesMatch(state: string): boolean {
@@ -51,8 +50,8 @@ export class AuthService {
         window.location.href = authUrl;
     }
 
-    public exchangeCodeForToken(authCode: string): Observable<OktaTokenResponse> {
-        return new Observable((observer: Observer<OktaTokenResponse>) => {
+    public exchangeCodeForToken(authCode: string): Observable<SsoTokenResponse> {
+        return new Observable((observer: Observer<SsoTokenResponse>) => {
             const tokenUrl = this.getTokenUrl();
             console.log("TokenUrl", tokenUrl);
             const tokenRequestBody = this.getTokenRequestBody(authCode);
@@ -61,15 +60,17 @@ export class AuthService {
             this.http.post(tokenUrl, tokenRequestBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } } )
                 .subscribe(tokenResponse => {
                     console.log("Token Response", tokenResponse);
-                    this.oktaTokenResponse = this.parseTokenResponse(tokenResponse);
-                    observer.next(this.oktaTokenResponse);
+                    this.ssoTokenResponse = this.parseTokenResponse(tokenResponse);
+                    SessionUtils.saveSessionInfo(this.ssoTokenResponse);
+                    this.auth$.next(true);
+                    observer.next(this.ssoTokenResponse);
                     observer.complete();
                 });    
         });
     }
 
-    public getOktaTokenResponse(): OktaTokenResponse | null {
-        return this.oktaTokenResponse;
+    public getSsoTokenResponse(): SsoTokenResponse | null {
+        return this.ssoTokenResponse;
     }
 
     public getTokenUrl(): string {
@@ -168,8 +169,7 @@ export class AuthService {
     }
 
     private getNonce() {
-        const ng = new NonceGenerator();
-        return ng.generate();
+        return this.getRandomString(32);
     }
 
     private getRedirectUri() {
@@ -184,7 +184,7 @@ export class AuthService {
         return this.state;
     }
 
-    private parseTokenResponse(tokenResponse: any): OktaTokenResponse {
+    private parseTokenResponse(tokenResponse: any): SsoTokenResponse {
         return {
             accessToken: tokenResponse["access_token"] || "",
             expiresIn: tokenResponse["expires_in"] || "",
@@ -201,10 +201,10 @@ export class AuthService {
         return decoded.sub;
     }
 
-    private getRandomString() {
+    private getRandomString(length: number = 64) {
         let retVal = "";
         const charDomain = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";       
-        for (let i = 0; i < 64; i++) {
+        for (let i = 0; i < length; i++) {
             retVal += charDomain.charAt(Math.floor(Math.random() * charDomain.length));
         }
         return retVal;

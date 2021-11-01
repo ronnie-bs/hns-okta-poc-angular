@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { OktaTokenResponse } from 'src/app/common/models/okta-token-response.model';
+import { SsoTokenResponse } from 'src/app/common/models/sso-token-response.model';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -19,6 +19,7 @@ export class LoginCallbackComponent implements OnInit, OnDestroy {
 
     constructor (
         private activatedRoute: ActivatedRoute,
+        private router: Router,
         private authSvc: AuthService
     ) {}
 
@@ -31,8 +32,9 @@ export class LoginCallbackComponent implements OnInit, OnDestroy {
             console.log("this.state", this.state);
             this.isStatesMatch = this.authSvc.isStatesMatch(this.state);
             if (this.isStatesMatch) {
-                this.authSvc.exchangeCodeForToken(this.authCode).subscribe((oktaTokenResponse: OktaTokenResponse) => {
+                this.authSvc.exchangeCodeForToken(this.authCode).subscribe((oktaTokenResponse: SsoTokenResponse) => {
                     this.user = oktaTokenResponse.user || "";
+                    this.router.navigate(["home"]);
                 });
             }
         });

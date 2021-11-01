@@ -1,4 +1,4 @@
-export interface OktaTokenResponse {
+export interface SsoTokenResponse {
     accessToken: string;
     expiresIn: number;
     idToken: string;

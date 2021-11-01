@@ -21,7 +21,6 @@
     "@angular/platform-browser": "~12.2.0",
     "@angular/platform-browser-dynamic": "~12.2.0",
     "@angular/router": "~12.2.0",
-    "a-nonce-generator": "^2.0.1",
     "crypto-js": "^4.1.1",
     "jwt-decode": "^3.1.2",
     "rxjs": "~6.6.0",

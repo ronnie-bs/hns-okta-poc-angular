@@ -1,3 +1,4 @@
+import { SsoTokenResponse } from "../models/sso-token-response.model";
 import { SessionInfo } from "../models/session-info.model";
 import { SsoVerifyInfo } from "../models/sso-verify-info.model";
 
@@ -15,6 +16,10 @@ export class SessionUtils {
         } catch (e) {
         }
         return retVal;
+    }
+
+    public static saveSessionInfo(ssoTokenResponse: SsoTokenResponse) {
+        sessionStorage.setItem(SESSION_STORAGE_OBJ_SESSION_INFO, JSON.stringify(ssoTokenResponse));
     }
 
     public static getSsoVerifyInfo(): SsoVerifyInfo {

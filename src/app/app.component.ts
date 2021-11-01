@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { SessionUtils } from 'src/app/common/utils/session-utils';
 import { AuthService } from './components/auth/auth.service';
 
@@ -7,8 +8,9 @@ import { AuthService } from './components/auth/auth.service';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
-    user: string | null = null;
+export class AppComponent implements OnInit, OnDestroy {
+    user: string = "";
+    subs$: Subscription[] = [];
     
     public isAuthenticated = false;
 
@@ -17,10 +19,23 @@ export class AppComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.isAuthenticated = this.auth.isAuthenticated();
-        const sessionInfo = SessionUtils.getSessionInfo();
-        if (sessionInfo) {
-            this.user = sessionInfo.user;
-        }
+        const sub$ = this.auth.isAuthenticated().subscribe((isAuthenticated: boolean) => {
+            if (isAuthenticated) {
+                this.isAuthenticated = isAuthenticated;
+                const sessionInfo = SessionUtils.getSessionInfo();
+                if (sessionInfo) {
+                    this.user = sessionInfo.user || "";
+                }
+            }
+        });
+        this.subs$.push(sub$);
+    }
+
+    ngOnDestroy() {
+        this.subs$.forEach(sub$ => {
+            if (!sub$.closed) {
+                sub$.unsubscribe();
+            }
+        });
     }
 }
