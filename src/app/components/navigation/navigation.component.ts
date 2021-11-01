@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { CommonConstants } from 'src/app/common/constants/common-constants';
 import { AuthService } from '../auth/auth.service';
 
 @Component({
@@ -44,9 +45,11 @@ export class NavigationComponent implements OnInit, OnDestroy {
                 break;
             case "tazio":
                 this.activeSelection = "tazio";
+                window.location.href = CommonConstants.TAZIO_APP_URL;
                 break;
             case "eightfold":
                 this.activeSelection = "eightfold";
+                window.location.href = CommonConstants.EIGHTFOLD_APP_URL;
                 break;
             default:
                 this.activeSelection = "";
