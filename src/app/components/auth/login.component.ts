@@ -11,9 +11,6 @@ export class LoginComponent implements OnInit {
     ) {}
 
     async ngOnInit() {
-        // const authUrl = await this.authSvc.getAuthUrl();
-        // console.log("AuthUrl", authUrl);
-        // window.location.href = authUrl;
         await this.authSvc.redirectToAuthUrl();
     }
 }

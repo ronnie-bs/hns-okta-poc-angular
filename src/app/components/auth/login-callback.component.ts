@@ -21,13 +21,18 @@ export class LoginCallbackComponent implements OnInit, OnDestroy {
     ) {}
 
     async ngOnInit() {
-        const sub$ = this.activatedRoute.queryParams.subscribe(params => {
-            this.authCode = params["code"];
-            this.state = params["state"];
+        const sub$ = this.activatedRoute.fragment.subscribe(fragment => {
+            const urlParams = new URLSearchParams(<string> fragment);
+            this.authCode = <string> urlParams.get("code");
+            this.state = <string> urlParams.get("state");
+            console.log("this.authCode", this.authCode);
+            console.log("this.state", this.state);
             this.isStatesMatch = this.authSvc.isStatesMatch(this.state);
+            if (this.isStatesMatch) {
+                this.authSvc.exchangeCodeForToken(this.authCode);
+            }
         });
         this.subs$.push(sub$);
-
     }
 
     ngOnDestroy() {

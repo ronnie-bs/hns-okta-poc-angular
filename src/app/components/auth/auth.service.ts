@@ -4,6 +4,8 @@ import { CommonConstants } from "src/app/common/constants/common-constants";
 import { encode as base64encode } from "base64-arraybuffer";
 import NonceGenerator from "a-nonce-generator";
 import { SessionUtils } from "src/app/common/utils/session-utils";
+import { HttpClient } from "@angular/common/http";
+import { OktaTokenResponse } from "src/app/common/models/okta-token-response.model";
 
 const CLIENT_ID = "0oa2gfmv78peGnHEy5d7";
 const CALLBACK_URI = 'login/callback';
@@ -13,15 +15,17 @@ export class AuthService {
     private codeVerifier: string = "";
     private codeChallenge: string = "";
     private state: string = "";
-    private authToken: string = "";
+    private oktaTokenResponse: OktaTokenResponse | null = null;
 
-    constructor() {
+    constructor(
+        private http: HttpClient
+    ) {
         const ssoVerifyInfo = SessionUtils.getSsoVerifyInfo();
         if (ssoVerifyInfo) {
             this.codeVerifier = ssoVerifyInfo.codeVerifier;
             this.codeChallenge = ssoVerifyInfo.codeChallenge;
             this.state = ssoVerifyInfo.state;
-            SessionUtils.removeSsoVerifyInfo();
+            // SessionUtils.removeSsoVerifyInfo();
         }
     }
 
@@ -45,20 +49,50 @@ export class AuthService {
         window.location.href = authUrl;
     }
 
+    public exchangeCodeForToken(authCode: string) {
+        const tokenUrl = this.getTokenUrl();
+        console.log("TokenUrl", tokenUrl);
+        const tokenRequestBody = this.getTokenRequestBody(authCode);
+        console.log("TokenRequestBody", tokenRequestBody);
+
+        this.http.post(tokenUrl, tokenRequestBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } } )
+            .subscribe(tokenResponse => {
+                console.log("Token Response", tokenResponse);
+                this.oktaTokenResponse = this.parseTokenResponse(tokenResponse);
+            });
+    }
+
+    public getTokenUrl(): string {
+        return `${CommonConstants.OKTA_TOKEN_BASE_URL}`;
+    }
+
+    public getTokenRequestBody(authCode: string): string {
+        return `${this.getClientIdUrlParam()}` +
+            `&${this.getCodeVerifierUrlParam()}` +
+            `&${this.getRedirectUriUrlParam()}` +
+            `&${this.getGrandTypeUrlParam()}` +
+            `&${this.getAuthCodeUrlParam(authCode)}`;
+    }
+
     public async getAuthUrl(): Promise<string> {
         return `${CommonConstants.OKTA_AUTH_BASE_URL}` +
             `?${this.getClientIdUrlParam()}` +
+            `&${this.getRedirectUriUrlParam()}` +
+            `&${this.getResponseTypeUrlParam()}` +
+            `&${this.getResponseModeUrlParam()}` +
+            `&${this.getStateUrlParam()}` +
+            `&${this.getNonceUrlParam()}` +
             `&${await this.getCodeChallengeUrlParam()}` +
             `&${this.getCodeChallengeMethodUrlParam()}` +
-            `&${this.getNonceUrlParam()}` +
-            `&${this.getRedirectUrlParam()}` +
-            `&${this.getResponseTypeUrlParam()}` +
-            `&${this.getStateUrlParam()}` +
             `&${this.getScopeUrlParam()}`;
     }
 
     private getClientIdUrlParam(): string {
         return `client_id=${CLIENT_ID}`;
+    }
+
+    private getCodeVerifierUrlParam(): string {
+        return `code_verifier=${this.getCodeVerifier()}`;
     }
 
     private async getCodeChallengeUrlParam(): Promise<string> {
@@ -73,7 +107,7 @@ export class AuthService {
         return `nonce=${this.getNonce()}`
     }
 
-    private getRedirectUrlParam(): string {
+    private getRedirectUriUrlParam(): string {
         return `redirect_uri=${this.getRedirectUri()}`;
     }
 
@@ -92,6 +126,14 @@ export class AuthService {
     private getScopeUrlParam(): string {
         const scopeString = `scope=${SCOPES.join(" ")}`;
         return encodeURI(scopeString);
+    }
+
+    private getGrandTypeUrlParam(): string {
+        return `grant_type=authorization_code`;
+    }
+
+    private getAuthCodeUrlParam(authCode: string) {
+        return `code=${authCode}`;
     }
 
     private getCodeVerifier(): string {
@@ -130,6 +172,16 @@ export class AuthService {
             this.state = this.getRandomString();
         }
         return this.state;
+    }
+
+    private parseTokenResponse(tokenResponse: any): OktaTokenResponse {
+        return {
+            accessToken: tokenResponse["access_token"],
+            expiresIn: tokenResponse["expires_in"],
+            idToken: tokenResponse["id_token"],
+            scopes: tokenResponse["scopes"].split(" "),
+            tokenType: tokenResponse["token_type"]
+        };
     }
 
     private getRandomString() {
