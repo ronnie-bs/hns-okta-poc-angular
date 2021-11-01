@@ -1,11 +1,13 @@
-
 import { Injectable } from "@angular/core";
-import { CommonConstants } from "src/app/common/constants/common-constants";
+import { HttpClient } from "@angular/common/http";
 import { encode as base64encode } from "base64-arraybuffer";
 import NonceGenerator from "a-nonce-generator";
+import jwtDecode, { JwtPayload } from "jwt-decode";
 import { SessionUtils } from "src/app/common/utils/session-utils";
-import { HttpClient } from "@angular/common/http";
+import { CommonConstants } from "src/app/common/constants/common-constants";
 import { OktaTokenResponse } from "src/app/common/models/okta-token-response.model";
+import { Observable, Observer } from "rxjs";
+
 
 const CLIENT_ID = "0oa2gfmv78peGnHEy5d7";
 const CALLBACK_URI = 'login/callback';
@@ -49,17 +51,25 @@ export class AuthService {
         window.location.href = authUrl;
     }
 
-    public exchangeCodeForToken(authCode: string) {
-        const tokenUrl = this.getTokenUrl();
-        console.log("TokenUrl", tokenUrl);
-        const tokenRequestBody = this.getTokenRequestBody(authCode);
-        console.log("TokenRequestBody", tokenRequestBody);
+    public exchangeCodeForToken(authCode: string): Observable<OktaTokenResponse> {
+        return new Observable((observer: Observer<OktaTokenResponse>) => {
+            const tokenUrl = this.getTokenUrl();
+            console.log("TokenUrl", tokenUrl);
+            const tokenRequestBody = this.getTokenRequestBody(authCode);
+            console.log("TokenRequestBody", tokenRequestBody);
+    
+            this.http.post(tokenUrl, tokenRequestBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } } )
+                .subscribe(tokenResponse => {
+                    console.log("Token Response", tokenResponse);
+                    this.oktaTokenResponse = this.parseTokenResponse(tokenResponse);
+                    observer.next(this.oktaTokenResponse);
+                    observer.complete();
+                });    
+        });
+    }
 
-        this.http.post(tokenUrl, tokenRequestBody, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } } )
-            .subscribe(tokenResponse => {
-                console.log("Token Response", tokenResponse);
-                this.oktaTokenResponse = this.parseTokenResponse(tokenResponse);
-            });
+    public getOktaTokenResponse(): OktaTokenResponse | null {
+        return this.oktaTokenResponse;
     }
 
     public getTokenUrl(): string {
@@ -176,12 +186,19 @@ export class AuthService {
 
     private parseTokenResponse(tokenResponse: any): OktaTokenResponse {
         return {
-            accessToken: tokenResponse["access_token"],
-            expiresIn: tokenResponse["expires_in"],
-            idToken: tokenResponse["id_token"],
-            scopes: tokenResponse["scopes"].split(" "),
-            tokenType: tokenResponse["token_type"]
+            accessToken: tokenResponse["access_token"] || "",
+            expiresIn: tokenResponse["expires_in"] || "",
+            idToken: tokenResponse["id_token"] || "",
+            scopes: (tokenResponse["scope"] || []).split(" "),
+            tokenType: tokenResponse["token_type"] || "",
+            user: this.getJwtUser(tokenResponse) || ""
         };
+    }
+
+    private getJwtUser(tokenResponse: any) {
+        const jwt = tokenResponse["access_token"];
+        const decoded = jwtDecode<JwtPayload>(jwt);
+        return decoded.sub;
     }
 
     private getRandomString() {

@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { OktaTokenResponse } from 'src/app/common/models/okta-token-response.model';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -12,6 +13,7 @@ export class LoginCallbackComponent implements OnInit, OnDestroy {
     public authCode: string = "";
     public state: string = "";
     public isStatesMatch: boolean = false;
+    public user: string = "";
 
     private subs$: Subscription[] = [];
 
@@ -29,7 +31,9 @@ export class LoginCallbackComponent implements OnInit, OnDestroy {
             console.log("this.state", this.state);
             this.isStatesMatch = this.authSvc.isStatesMatch(this.state);
             if (this.isStatesMatch) {
-                this.authSvc.exchangeCodeForToken(this.authCode);
+                this.authSvc.exchangeCodeForToken(this.authCode).subscribe((oktaTokenResponse: OktaTokenResponse) => {
+                    this.user = oktaTokenResponse.user || "";
+                });
             }
         });
         this.subs$.push(sub$);
