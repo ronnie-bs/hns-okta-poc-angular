@@ -1,0 +1,30 @@
+.controls {
+    display: flex;
+    justify-content: space-between;
+    border: solid 1px black;
+    padding: 20px;
+    width: 500px;
+}
+
+.users-list-header {
+    display: flex;
+    justify-content: space-around;
+    font-weight: 600;
+    padding: 10px;
+    border-top: solid 1px black;
+    border-bottom: solid 1px black;
+}
+
+.users-list-header div {
+    flex: 1;
+}
+
+.user-details {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+}
+
+.user-details div {
+    flex: 1;
+}

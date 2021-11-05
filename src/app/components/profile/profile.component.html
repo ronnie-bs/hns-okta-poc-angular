@@ -1,1 +1,35 @@
 <h1>You are at the Profile Page and you can get here only if you are authenticated</h1> 
+
+<div class="controls">
+    <div class="radiobuttons">
+        <input type="radio" value="Y" name="includejwt" [(ngModel)]="includejwt" />Include JWT
+        <input type="radio" value="N" name="includejwt" [(ngModel)]="includejwt" />Do NOT Include JWT
+    </div>
+    <div class="refreshbutton">
+        <button name="refresh" (click)="refreshData()">Refresh Data</button>
+    </div>
+</div>
+
+<h2>Users List</h2>
+
+<div class="users-container-outer">
+    <div class="users-list-header">
+        <div>Name</div>
+        <div>Username</div>
+        <div>Email</div>
+        <div>Phone</div>
+        <div>Website</div>
+    </div>
+
+    <div class="users-list-body">
+        <ng-container *ngFor="let user of users$ | async">
+            <div class="user-details">
+                <div class="name">{{user.name}}</div>
+                <div class="username">{{user.username}}</div>
+                <div class="email">{{user.email}}</div>
+                <div class="phone">{{user.phone}}</div>
+                <div class="website">{{user.website}}</div>
+            </div>
+        </ng-container>
+    </div>
+</div>
